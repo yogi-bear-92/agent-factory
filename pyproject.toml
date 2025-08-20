@@ -1,0 +1,7 @@
+[project]
+name = "agent-factory"
+version = "0.1.0"
+description = "AI Agent Factory with PRP Framework Integration"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
