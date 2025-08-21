@@ -1,0 +1,98 @@
+# Python Coding Standards
+
+## Python Version
+- **Python 3.12+** required (specified in [pyproject.toml](mdc:pyproject.toml))
+- Use modern Python features: type hints, dataclasses, pattern matching
+
+## Code Style & Formatting
+- **Line Length**: 88 characters (configured in [pyproject.toml](mdc:pyproject.toml))
+- **Formatter**: Use `ruff format` for consistent formatting
+- **Linting**: Use `ruff check --fix` for style enforcement
+- **Import Sorting**: Managed by Ruff rule I (isort equivalent)
+
+## Type Hints
+- **Required**: Use type hints for all function parameters and return values
+- **Strict Mode**: Configured in [pyproject.toml](mdc:pyproject.toml) with mypy strict settings
+- **No Any**: Avoid `Any` in function signatures
+- **Unions**: Use `|` syntax for Python 3.12+ (e.g., `str | None`)
+- **No Implicit Optional**: Explicitly handle optional parameters
+
+## Import Organization
+```python
+# Standard library imports first
+import os
+import sys
+from pathlib import Path
+from typing import Optional, List
+
+# Third-party imports
+import structlog
+from fastapi import FastAPI
+
+# Local imports (src.*)
+from src.models import AgentMessage, ExecutionResult
+from src.agents.base import BaseAgent
+```
+
+## Naming Conventions
+- **Functions/Variables**: `snake_case`
+- **Classes**: `PascalCase` (e.g., `BaseAgent`, `ExecutionResult`)
+- **Constants**: `ALL_CAPS`
+- **Private Methods**: Prefix with `_` (e.g., `_internal_helper`)
+- **Module Names**: Keep short and descriptive
+
+## Error Handling
+- **Specific Exceptions**: Catch specific exception types, not generic `Exception`
+- **Structured Results**: Return `ExecutionResult` objects instead of raising exceptions
+- **Logging**: Use structured logging via `structlog` or `logging.getLogger(__name__)`
+- **Context**: Include contextual information in error messages
+
+## Async Patterns
+- **Prefer Async**: Use `async/await` for I/O operations
+- **Event Loop**: Never block the event loop - use `asyncio.to_thread` for CPU/file I/O
+- **Cancellation**: Handle `asyncio.CancelledError` explicitly in heartbeat loops
+- **Testing**: Use `pytest` with `asyncio_mode=auto`
+
+## Logging Standards
+- **Structured Logging**: Use `structlog` for consistent log formatting
+- **Context Keys**: Add contextual information via `log_context()`
+- **Levels**: 
+  - `INFO`: Lifecycle events and major operations
+  - `DEBUG`: Fine-grained debugging information
+  - `ERROR`: Error conditions with succinct messages
+- **Avoid**: Don't use `print()` statements
+
+## Data Models
+- **Pydantic Models**: Use for configuration and structured messages
+- **Dataclasses**: For simple data containers
+- **Validation**: Leverage Pydantic's built-in validation
+- **Serialization**: Use Pydantic's JSON serialization capabilities
+
+## Testing Standards
+- **Framework**: Use `pytest` with `asyncio_mode=auto`
+- **Naming**: Test functions must start with `test_`
+- **Isolation**: Use fixtures for temporary directories and mocks
+- **Assertions**: Use explicit assertions, not implicit truthiness
+- **Coverage**: Aim for comprehensive test coverage
+
+## Development Commands
+```bash
+# Install dependencies
+uv sync
+
+# Code quality
+ruff check --fix src tests
+ruff format src tests
+
+# Type checking
+mypy src --strict
+
+# Testing
+uv run pytest -v
+uv run pytest tests/test_file.py::test_case -v
+uv run pytest -k "test_name" -q
+```
+description:
+globs:
+alwaysApply: false
+---

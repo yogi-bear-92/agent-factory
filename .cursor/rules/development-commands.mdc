@@ -1,0 +1,172 @@
+# Development Commands & Workflow
+
+## Environment Setup
+
+### Initial Setup
+```bash
+# Install dependencies
+uv sync
+
+# Copy environment configuration
+cp .env.example .env
+
+# Start development services (Redis, Chroma, API)
+./scripts/dev-start.sh
+```
+
+### Development Services
+- **Redis**: Message bus and caching
+- **Chroma**: Vector database for knowledge storage
+- **API Server**: FastAPI development server
+- **Health Check**: `curl -f http://localhost:8000/health`
+
+## Code Quality Commands
+
+### Linting & Formatting
+```bash
+# Check and fix linting issues
+ruff check --fix src tests
+
+# Format code (line length 88, ignore E501)
+ruff format src tests
+
+# Import sorting (managed by Ruff rule I)
+# No manual import sorting needed
+```
+
+### Type Checking
+```bash
+# Strict type checking with mypy
+mypy src --strict
+
+# Configuration in [pyproject.toml](mdc:pyproject.toml):
+# - disallow_untyped_defs
+# - disallow_untyped_decorators  
+# - no_implicit_optional
+# - warn_unused_ignores
+# - strict_equality
+```
+
+## Testing Commands
+
+### Test Execution
+```bash
+# Run all tests
+uv run pytest -v
+
+# Fast fail mode
+uv run pytest -x
+
+# Run specific test file
+uv run pytest tests/test_models.py -v
+
+# Run single test case
+uv run pytest tests/test_models.py::test_agent_message_creation -q
+
+# Pattern-based testing
+uv run pytest -k "chroma and not redis" --maxfail=1
+```
+
+### Test Configuration
+- **Framework**: pytest with asyncio_mode=auto
+- **Test Paths**: [tests/](mdc:tests/) directory
+- **Async Support**: Built-in async/await testing support
+
+## PRP Workflow Commands
+
+### PRP Execution
+```bash
+# Interactive PRP execution
+uv run PRPs/scripts/prp_runner.py --prp <name> --interactive
+
+# Headless execution with JSON output
+uv run PRPs/scripts/prp_runner.py --prp <name> --output-format json
+
+# PRP script location: [PRPs/scripts/prp_runner.py](mdc:PRPs/scripts/prp_runner.py)
+```
+
+### PRP Development
+- **Templates**: Located in [PRPs/templates/](mdc:PRPs/templates/)
+- **AI Documentation**: [PRPs/ai_docs/](mdc:PRPs/ai_docs/)
+- **Requirements**: [PRPs/requirements/](mdc:PRPs/requirements/)
+
+## Development Workflow
+
+### Daily Development Routine
+1. **Start Services**: `./scripts/dev-start.sh`
+2. **Check Health**: `curl -f http://localhost:8000/health`
+3. **Code Quality**: `ruff check --fix src tests && ruff format src tests`
+4. **Type Check**: `mypy src --strict`
+5. **Run Tests**: `uv run pytest -v`
+6. **Execute PRPs**: Use PRP runner for task execution
+
+### Before Committing
+```bash
+# Ensure all quality checks pass
+ruff check --fix src tests
+ruff format src tests
+mypy src --strict
+uv run pytest -v
+
+# Run focused tests for changed areas
+uv run pytest -k "test_name" --maxfail=1
+```
+
+## Project Structure Commands
+
+### Directory Navigation
+- **Source Code**: [src/](mdc:src/) - Main application code
+- **Agents**: [src/agents/](mdc:src/agents/) - Agent implementations
+- **Configuration**: [src/config/](mdc:src/config/) - Settings and config
+- **Tests**: [tests/](mdc:tests/) - Test suite
+- **Scripts**: [scripts/](mdc:scripts/) - Development utilities
+
+### Key Files
+- **Project Config**: [pyproject.toml](mdc:pyproject.toml) - Dependencies and settings
+- **Models**: [src/models.py](mdc:src/models.py) - Core data structures
+- **Base Agent**: [src/agents/base/agent_interface.py](mdc:src/agents/base/agent_interface.py)
+- **Settings**: [src/config/settings.py](mdc:src/config/settings.py)
+
+## Troubleshooting Commands
+
+### Service Issues
+```bash
+# Check service status
+docker-compose -f docker-compose.dev.yml ps
+
+# Restart services
+docker-compose -f docker-compose.dev.yml restart
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+```
+
+### Code Issues
+```bash
+# Check for syntax errors
+python -m py_compile src/**/*.py
+
+# Verify imports
+python -c "import src.agents.base.agent_interface"
+
+# Check environment
+echo $PYTHONPATH
+which python
+python --version
+```
+
+## Performance & Monitoring
+
+### Development Monitoring
+- **API Health**: `curl -f http://localhost:8000/health`
+- **Service Status**: Docker Compose status commands
+- **Log Monitoring**: Follow service logs in real-time
+
+### Memory & Performance
+- **Python Version**: 3.12+ for optimal performance
+- **Async Patterns**: Use asyncio for non-blocking operations
+- **Resource Management**: Proper cleanup in async context managers
+description:
+globs:
+alwaysApply: false
+---
