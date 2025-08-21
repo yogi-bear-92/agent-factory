@@ -1,0 +1,44 @@
+#!/bin/bash
+# PRP Validation Command Wrapper
+# Usage: ./validate <prp_file>
+
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "Usage: ./validate <prp_file>"
+    echo "Example: ./validate PRPs/my-feature.md"
+    exit 1
+fi
+
+PRP_FILE="$1"
+
+if [ ! -f "$PRP_FILE" ]; then
+    echo "Error: PRP file not found: $PRP_FILE"
+    exit 1
+fi
+
+echo "🔍 Validating PRP: $PRP_FILE"
+echo "=========================================="
+
+# Run the Python validation script
+python "$(dirname "$0")/validate_prp.py" "$PRP_FILE"
+
+exit_code=$?
+
+echo ""
+echo "=========================================="
+case $exit_code in
+    0)
+        echo "✅ PRP is ready for execution!"
+        ;;
+    1)
+        echo "⚠️  PRP needs attention before execution"
+        echo "Review the issues above and re-run validation"
+        ;;
+    2)
+        echo "❌ PRP is blocked - critical issues must be resolved"
+        echo "Address all failures before attempting execution"
+        ;;
+esac
+
+exit $exit_code
