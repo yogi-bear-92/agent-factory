@@ -12,131 +12,95 @@ Welcome to the **agent-factory** project! This comprehensive guide will help you
 - **Command-Driven Development**: Pre-configured Claude Code commands for various development workflows
 - **Template-Based Methodology**: Structured PRP templates with validation loops
 - **AI Documentation Curation**: Curated documentation for context injection into AI workflows
+- **Multi-Agent System**: Specialized agents (Planner, Coder, Tester, Reviewer, DevOps, Coordinator) working together
+- **Knowledge Management**: Vector database with RAG for context-aware decisions
+- **Agent Coordination**: Redis pub/sub messaging for seamless communication
 
 ### Tech Stack
 - **Language**: Python 3.12+ 
 - **Package Manager**: uv (modern Python package manager)
-- **AI Framework**: Claude Code CLI integration
+- **AI Framework**: Claude Code CLI integration + LangChain + LangGraph
 - **MCP Servers**: serena (desktop), archon (remote HTTP), browsermcp (browser automation)
+- **Vector Database**: Chroma for knowledge storage and retrieval
+- **Message Bus**: Redis for agent communication
+- **API Framework**: FastAPI for REST and streaming interfaces
 - **Documentation**: Markdown-based templates and structured YAML configurations
 
 ### Architecture Pattern
-**Template-Driven Framework Architecture**:
-- Command layer (`.claude/commands/`)
-- Template layer (`PRPs/templates/`)
-- Documentation layer (`PRPs/ai_docs/`)
-- Execution layer (`PRPs/scripts/`)
-- Framework examples (`claude_md_files/`)
+**Multi-Agent System with Template-Driven Framework Architecture**:
+- **Agent Layer**: Specialized agents for different development roles
+- **Command Layer** (`.claude/commands/`): Pre-configured development workflows
+- **Template Layer** (`PRPs/templates/`): Structured PRP templates with validation
+- **Documentation Layer** (`PRPs/ai_docs/`): Curated documentation for AI context injection
+- **Execution Layer** (`PRPs/scripts/`): PRP execution and agent coordination
+- **Framework Examples** (`claude_md_files/`): Framework-specific CLAUDE.md examples
 
 ### Key Dependencies
 - **uv**: Modern Python package manager and script runner
 - **Claude Code**: AI-powered development CLI tool
 - **MCP Protocol**: For server integrations (serena, archon, browsermcp)
+- **LangChain**: Multi-agent orchestration and LLM integration
+- **Chroma**: Vector database for knowledge storage
+- **Redis**: Message bus for agent communication
+- **FastAPI**: Web framework for API endpoints
 
 ## 2. Repository Structure
 
-```
-agent-factory/
-├── .claude/                    # Claude Code configuration
-│   ├── commands/              # 35+ pre-configured commands
-│   │   ├── prp-commands/      # PRP creation and execution workflows
-│   │   ├── development/       # Core development utilities
-│   │   ├── code-quality/      # Review and refactoring commands  
-│   │   ├── rapid-development/ # Parallel PRP creation tools
-│   │   ├── git-operations/    # Conflict resolution and git operations
-│   │   └── typescript/        # TypeScript-specific commands
-│   └── settings.local.json    # Tool permissions and configuration
-├── PRPs/                      # Product Requirement Prompt framework
-│   ├── templates/             # Structured PRP templates
-│   │   ├── prp_base.md        # Main implementation template
-│   │   ├── prp_planning.md    # Planning document template
-│   │   ├── prp_spec.md        # Specification template
-│   │   └── ...                # Additional specialized templates
-│   ├── scripts/               # PRP execution scripts
-│   │   └── prp_runner.py      # Main PRP execution script
-│   ├── ai_docs/               # Curated Claude Code documentation
-│   │   ├── getting_started.md # Claude Code basics
-│   │   ├── cc_commands.md     # Command system documentation
-│   │   ├── subagents.md       # Multi-agent orchestration
-│   │   └── ...                # Additional AI workflow docs
-│   └── README.md              # PRP methodology explanation
-├── claude_md_files/           # Framework-specific CLAUDE.md examples
-│   ├── CLAUDE-REACT.md        # React project template
-│   ├── CLAUDE-PYTHON-BASIC.md # Python project template
-│   ├── CLAUDE-NEXTJS-15.md    # Next.js project template
-│   └── ...                    # Additional framework templates
-├── CLAUDE.md                  # Project-specific Claude Code instructions
-└── pyproject.toml             # Python project configuration
-```
-
-### Directory Purposes
-
-- **`.claude/commands/`**: Command-driven development workflows organized by function
-- **`PRPs/templates/`**: Structured templates for creating comprehensive implementation prompts
-- **`PRPs/ai_docs/`**: Curated documentation for AI context injection
-- **`claude_md_files/`**: Framework-specific CLAUDE.md examples for different tech stacks
-- **`PRPs/scripts/`**: Automation scripts for PRP execution and management
-
-### Unique Organizational Patterns
-
-1. **Command-Driven Architecture**: All development workflows are pre-configured as Claude Code commands
-2. **Template-First Approach**: Every implementation starts with a structured template
-3. **Context Injection System**: Systematic curation of documentation for AI agents
-4. **Validation-First Design**: Every template includes executable validation gates
+> **📖 Complete Project Structure**: See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for detailed repository structure and directory explanations.
 
 ## 3. Getting Started
 
 ### Prerequisites
-- **Python**: Version 3.12 or higher
-- **uv**: Modern Python package manager (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- **Claude Code**: AI development CLI (`npm install -g @anthropics/claude-code`)
-- **Git**: For version control
+
+> **📖 Detailed Prerequisites**: See [Shared Components - Prerequisites](docs/SHARED_COMPONENTS.md#prerequisites) for complete installation requirements and verification steps.
 
 ### Environment Setup
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd agent-factory
-   ```
-
-2. **Verify prerequisites**:
-   ```bash
-   python3 --version  # Should be 3.12+
-   uv --version        # Should be installed
-   claude --version    # Should be installed
-   ```
-
-3. **Initialize project context**:
-   ```bash
-   claude /prime-core
-   ```
+> **📖 Standard Setup Process**: Follow the [standard installation steps](docs/SHARED_COMPONENTS.md#installation-steps) for the complete setup process.
 
 ### How to Install Dependencies
-This project uses minimal dependencies managed by `uv`:
+This project uses `uv` for dependency management:
 ```bash
-# Dependencies are managed in pyproject.toml
-# No installation required for basic usage
+# Install all dependencies
+uv sync
+
+# Install development dependencies
+uv sync --extra dev
+
+# Update dependencies
+uv sync --upgrade
 ```
 
 ### Configuration Files
+- **`.env`**: Environment variables (copy from `.env.example`)
 - **`.claude/settings.local.json`**: Claude Code tool permissions
 - **`CLAUDE.md`**: Project-specific instructions for Claude Code
 - **`pyproject.toml`**: Python project metadata and dependencies
+- **`docker-compose.dev.yml`**: Development service configuration
 
 ### How to Run the Project Locally
 
-1. **Prime Claude with project context**:
+1. **Start development services**:
+   ```bash
+   ./scripts/dev-start.sh
+   ```
+
+2. **Verify services are running**:
+   ```bash
+   curl -f http://localhost:8000/health
+   ```
+
+3. **Prime Claude with project context**:
    ```bash
    claude /prime-core
    ```
 
-2. **Create a PRP**:
+4. **Create a PRP**:
    ```bash
    claude /prp-base-create "your feature description"
    ```
 
-3. **Execute a PRP**:
+5. **Execute a PRP**:
    ```bash
    # Interactive mode (recommended)
    uv run PRPs/scripts/prp_runner.py --prp your-feature --interactive
@@ -146,16 +110,31 @@ This project uses minimal dependencies managed by `uv`:
    ```
 
 ### How to Run Tests
-Currently, the project is template-based and doesn't have traditional tests. Validation happens through:
-- **Template validation**: Ensuring PRPs follow structured format
-- **Execution validation**: Running PRP validation gates
-- **Command testing**: Testing Claude Code commands work as expected
+```bash
+# Run all tests
+uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/test_models.py -v
+
+# Run with coverage
+uv run pytest --cov=src --cov-report=term-missing
+
+# Run tests with pattern matching
+uv run pytest -k "test_name" --maxfail=1
+```
 
 ### How to Build for Production
-This is a development framework, not a deployable application. "Production" means:
-- Well-structured PRPs that enable successful AI implementations
-- Properly configured Claude Code commands
-- Curated documentation for AI context injection
+```bash
+# Build Docker images
+docker-compose build
+
+# Start production services
+docker-compose up -d
+
+# Check service health
+docker-compose ps
+```
 
 ## 4. Key Components
 
@@ -163,16 +142,20 @@ This is a development framework, not a deployable application. "Production" mean
 - **`PRPs/scripts/prp_runner.py`**: Main script for executing PRPs with AI agents
 - **`.claude/commands/`**: All development workflows accessible via `/command-name`
 - **`CLAUDE.md`**: Project instructions loaded by Claude Code
+- **`src/agent_factory/cli.py`**: Command-line interface for the framework
 
 ### Core Business Logic
 - **PRP Template System** (`PRPs/templates/`): Structured approach to AI prompt creation
 - **Command Orchestration** (`.claude/commands/`): Pre-configured development workflows
 - **Context Curation** (`PRPs/ai_docs/`): Documentation system for AI agents
+- **Multi-Agent System** (`src/agents/`): Specialized agents for different development roles
+- **Knowledge Management** (`src/knowledge/`): Vector database and RAG implementation
 
 ### Configuration Management
+- **`src/config/settings.py`**: Centralized configuration with Pydantic models
 - **`.claude/settings.local.json`**: Tool permissions and Claude Code configuration
 - **`CLAUDE.md`**: Project-specific instructions and conventions
-- **`pyproject.toml`**: Python project metadata
+- **`pyproject.toml`**: Python project metadata and dependencies
 
 ### Key Files Explained
 
@@ -191,14 +174,26 @@ This is a development framework, not a deployable application. "Production" mean
    - Includes research process and quality gates
    - Uses multi-agent approach for thorough context gathering
 
+4. **`src/models.py`**: 
+   - Core data structures for the agent framework
+   - Defines message types, task specifications, and execution results
+   - Uses Pydantic for validation and serialization
+
+5. **`src/agents/base/agent_interface.py`**: 
+   - Base class for all agents in the system
+   - Defines common interface and behavior patterns
+   - Ensures consistency across different agent types
+
 ## 5. Development Workflow
 
-### Git Branch Naming Conventions
-This project follows standard conventions:
-- `feature/feature-name` - New features
-- `fix/issue-description` - Bug fixes  
-- `docs/documentation-update` - Documentation changes
-- `refactor/component-name` - Code refactoring
+### Development Workflow
+
+> **📖 Complete Development Workflow**: See [Shared Components - Development Workflow](docs/SHARED_COMPONENTS.md#development-workflow) for detailed information about:
+> - Git branch naming conventions
+> - Testing requirements  
+> - Code style and linting rules
+> - PR process and review guidelines
+> - Claude Code command system
 
 ### How to Create a New Feature
 
@@ -218,32 +213,6 @@ This project follows standard conventions:
    claude /smart-commit "feature description"
    ```
 
-### Testing Requirements
-- **Template Validation**: PRPs must follow structured format
-- **Execution Testing**: Validation gates must pass
-- **Documentation**: Changes must be documented
-
-### Code Style/Linting Rules
-- **Python**: Standard Python conventions (would use ruff/black if this were a Python codebase)
-- **Markdown**: Consistent formatting for templates and documentation
-- **YAML**: Structured format for context sections in PRPs
-
-### PR Process and Review Guidelines
-1. **Create comprehensive PRP** for the feature
-2. **Execute PRP** and ensure validation gates pass
-3. **Review changes** using `/review-staged-unstaged` command
-4. **Create PR** using `/create-pr` command
-5. **Ensure documentation** is updated
-
-### Claude Code Command System
-Access commands via `/` prefix:
-- `/prp-base-create` - Create comprehensive PRPs
-- `/prp-base-execute` - Execute PRPs against codebase  
-- `/prime-core` - Initialize project context
-- `/review-staged-unstaged` - Review changes using PRP methodology
-- `/debug` - Debugging workflow
-- `/smart-commit` - Intelligent git commits
-
 ## 6. Architecture Decisions
 
 ### Design Patterns
@@ -251,28 +220,43 @@ Access commands via `/` prefix:
 2. **Command Pattern**: All workflows are encapsulated as executable commands
 3. **Strategy Pattern**: Different PRP templates for different implementation types
 4. **Observer Pattern**: Validation gates provide feedback loops
+5. **Factory Pattern**: Agent creation and management
+6. **Repository Pattern**: Knowledge and data access abstraction
 
 ### State Management Approach
 - **Stateless Templates**: PRPs are stateless, reusable templates
 - **Context Injection**: State comes from curated documentation and codebase analysis
 - **Execution Tracking**: PRP runner provides execution state and progress
+- **Agent State**: Individual agents maintain their own state and memory
 
 ### Error Handling Strategy
 - **Validation Gates**: Multiple levels of validation (syntax, tests, integration)
 - **Progressive Success**: Start simple, validate, then enhance
 - **Failure Recovery**: Clear error messages and recovery paths
+- **Structured Results**: Use `ExecutionResult` for consistent error handling
 
 ### Performance Optimizations
 - **Multi-Agent Orchestration**: Parallel research and implementation
 - **Context Caching**: Reusable documentation and patterns
 - **Template Reuse**: Structured templates prevent reinventing patterns
+- **Async Operations**: Non-blocking I/O for better performance
+- **Connection Pooling**: Efficient resource management
 
 ### Security Measures
 - **Sandboxed Execution**: Claude Code provides safe execution environment
 - **Permission System**: Explicit tool permissions in settings
 - **Code Review**: Built-in review commands for security validation
+- **Environment Variables**: Secure configuration management
+- **Input Validation**: Pydantic models for data validation
 
 ## 7. Common Tasks
+
+### How to Add a New Agent
+1. **Create agent class** in `src/agents/` directory
+2. **Inherit from BaseAgent** in `src/agents/base/agent_interface.py`
+3. **Implement required methods**: `process_message()`, `execute_task()`
+4. **Add tests** in corresponding test directory
+5. **Update agent registry** if needed
 
 ### How to Add a New PRP Template
 1. **Study existing templates** in `PRPs/templates/`
@@ -310,31 +294,37 @@ Access commands via `/` prefix:
 - **MCP Server Configuration**: Multiple MCP servers (serena, archon, browsermcp) need proper setup
 - **Tool Permissions**: `.claude/settings.local.json` controls which tools are available
 - **Template Dependencies**: Some templates reference specific documentation that must exist
+- **Environment Variables**: Required for Redis, Chroma, and other services
 
 ### Required Environment Variables
 - **Claude Code API**: May require authentication setup
 - **MCP Servers**: Remote servers may need configuration
 - **Project Context**: CLAUDE.md instructions are critical for proper operation
+- **Service Configuration**: Redis, Chroma, and API settings
 
 ### External Service Dependencies
 - **Claude Code Service**: Requires internet connection and valid API access
 - **MCP Servers**: archon runs on localhost:8051, requires server availability
 - **Documentation URLs**: Template references to external documentation must be accessible
+- **Docker Services**: Redis, Chroma, and other services must be running
 
 ### Known Issues or Workarounds
 - **Context Window Limits**: Large PRPs may hit context limits; use focused templates
 - **Command Execution**: Some commands require specific project structure
 - **Template Evolution**: Older PRPs may not follow current template standards
+- **Service Dependencies**: Ensure all required services are running before testing
 
 ### Performance Bottlenecks
 - **Research Phase**: Comprehensive PRP creation can be time-intensive
 - **Multi-Agent Coordination**: Parallel agent execution requires coordination
 - **Context Loading**: Large documentation sets may slow initial loading
+- **Vector Database**: Chroma operations can be slow with large datasets
 
 ### Areas of Technical Debt
 - **Template Versioning**: No formal versioning system for template evolution
 - **Command Discovery**: Command system could benefit from better discovery mechanism
 - **Validation Standardization**: Validation gates vary across templates
+- **Test Coverage**: Some components lack comprehensive test coverage
 
 ## 9. Documentation and Resources
 
@@ -343,12 +333,15 @@ Access commands via `/` prefix:
 - **`PRPs/ai_docs/`**: Curated Claude Code documentation for AI agents
 - **`.claude/commands/`**: Self-documenting command system
 - **`CLAUDE.md`**: Project-specific instructions for Claude Code
+- **`.cursor/rules/`**: Comprehensive coding standards and patterns
 
 ### Key Documentation Files
 - **`PRPs/ai_docs/getting_started.md`**: Claude Code basics
 - **`PRPs/ai_docs/cc_commands.md`**: Command system documentation  
 - **`PRPs/ai_docs/subagents.md`**: Multi-agent orchestration patterns
 - **`PRPs/templates/prp_base.md`**: Comprehensive implementation template
+- **`.cursor/rules/python-coding-standards.mdc`**: Python coding standards
+- **`.cursor/rules/agent-development-patterns.mdc`**: Agent development patterns
 
 ### Framework Examples
 The `claude_md_files/` directory contains CLAUDE.md examples for various frameworks:
@@ -359,10 +352,11 @@ The `claude_md_files/` directory contains CLAUDE.md examples for various framewo
 - And more...
 
 ### API Documentation
-This is a framework project, not an API. "Documentation" refers to:
-- **Template Documentation**: Structured PRP formats
-- **Command Documentation**: Claude Code command specifications
-- **Context Documentation**: AI-consumable documentation patterns
+This is a framework project with multiple components:
+- **Agent API**: Agent interface and communication protocols
+- **Knowledge API**: Vector database and RAG operations
+- **Workflow API**: PRP execution and validation
+- **Communication API**: Message bus and coordination
 
 ## 10. Next Steps - Onboarding Checklist
 
@@ -370,10 +364,14 @@ This is a framework project, not an API. "Documentation" refers to:
 - [ ] Install Python 3.12+
 - [ ] Install uv package manager
 - [ ] Install Claude Code CLI
+- [ ] Install Docker
 - [ ] Clone the repository
 - [ ] Verify all prerequisites work
 
 ### Run the Project Successfully  
+- [ ] Execute `uv sync` to install dependencies
+- [ ] Copy and configure `.env` file
+- [ ] Run `./scripts/dev-start.sh` to start services
 - [ ] Execute `claude /prime-core` to initialize context
 - [ ] Browse available commands: `ls .claude/commands/`
 - [ ] Read `PRPs/README.md` to understand PRP methodology
@@ -390,12 +388,14 @@ This is a framework project, not an API. "Documentation" refers to:
 - [ ] Test PRP runner: `uv run PRPs/scripts/prp_runner.py --help`
 - [ ] Verify Claude Code commands work: `claude /review-staged-unstaged`
 - [ ] Check MCP server connectivity (if configured)
+- [ ] Run tests: `uv run pytest -v`
 
 ### Understand the Main User Flow
 - [ ] **PRP Creation**: Use `/prp-base-create` to create comprehensive implementation prompts
 - [ ] **PRP Execution**: Use `prp_runner.py` to execute PRPs with AI agents
 - [ ] **Review and Refinement**: Use `/review-staged-unstaged` to validate implementations
 - [ ] **Template Evolution**: Update templates based on implementation learnings
+- [ ] **Multi-Agent Coordination**: Understand how agents work together
 
 ### Identify Area to Start Contributing
 Choose based on your interests and expertise:
@@ -406,6 +406,8 @@ Choose based on your interests and expertise:
 - **Framework Examples**: Create CLAUDE.md examples for new frameworks
 - **Validation Systems**: Improve validation gates and quality assurance
 - **Multi-Agent Orchestration**: Enhance parallel execution and coordination
+- **Agent Development**: Extend or improve existing agents
+- **Knowledge Management**: Enhance vector database and RAG capabilities
 
 ### Recommended First Contributions
 1. **Study the PRP methodology** by reading `PRPs/README.md`
@@ -413,6 +415,7 @@ Choose based on your interests and expertise:
 3. **Execute the PRP** and observe the validation process
 4. **Identify improvement opportunities** in templates or commands
 5. **Propose enhancements** based on your experience
+6. **Contribute to agent development** by understanding the multi-agent system
 
 ## Getting Help
 
@@ -420,5 +423,7 @@ Choose based on your interests and expertise:
 - **Command Reference**: Browse `.claude/commands/` for available workflows
 - **Template Guide**: Study `PRPs/templates/prp_base.md` for implementation patterns
 - **Claude Code Help**: Use `claude /help` for CLI assistance
+- **Coding Standards**: Check `.cursor/rules/` for comprehensive guidelines
+- **Agent Patterns**: Study `src/agents/` for multi-agent system understanding
 
 Welcome to the agent-factory! This framework is designed to enable AI agents to ship production-ready code through comprehensive context and validation. Your contributions will help make AI-driven development more reliable and effective.

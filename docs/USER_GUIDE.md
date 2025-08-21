@@ -18,55 +18,17 @@ Welcome to **Agent Factory**, an AI-driven autonomous development framework that
 
 ### Prerequisites
 
-Before using Agent Factory, ensure you have:
-
-- **Python 3.12+** installed on your system
-- **Git** for version control
-- **Docker** (optional, for containerized deployment)
-- **Claude Code CLI** (optional, for enhanced PRP workflows)
+> **📖 Detailed Prerequisites**: See [Shared Components - Prerequisites](SHARED_COMPONENTS.md#prerequisites) for complete installation requirements.
 
 ### Quick Start
 
-1. **Initialize your environment**:
-   ```bash
-   cd agent-factory
-   uv sync  # Install dependencies
-   ```
+> **📖 Complete Quick Start**: See [../QUICKSTART.md](../QUICKSTART.md) for the complete 5-minute setup guide.
 
-2. **Configure environment variables**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your LLM provider credentials
-   ```
-
-3. **Start the system**:
-   ```bash
-   # Start Redis (if not using Docker)
-   redis-server
-
-   # Start Chroma vector database
-   chroma run --host localhost --port 8000
-
-   # Launch Agent Factory API
-   uv run uvicorn src.api.rest.app:app --host 0.0.0.0 --port 8080
-   ```
-
-4. **Submit your first feature**:
-   ```bash
-   curl -X POST http://localhost:8080/features/create \
-     -H "Content-Type: application/json" \
-     -d '{
-       "title": "User Authentication System",
-       "description": "Implement secure user login and registration with JWT tokens",
-       "priority": "high",
-       "requirements": [
-         "Secure password hashing",
-         "JWT token generation",
-         "Input validation",
-         "Rate limiting"
-       ]
-     }'
-   ```
+**Summary:**
+1. Install dependencies and start services
+2. Initialize Claude context
+3. Create your first PRP
+4. Execute with multi-agent system
 
 ## Core Concepts
 
@@ -82,62 +44,16 @@ PRPs are comprehensive, structured documents that provide everything an AI agent
 - **Implementation Blueprint**: Step-by-step technical plan
 - **Validation Gates**: Executable tests and quality checks
 
-### Autonomous Development Workflow
+### Core Concepts Overview
 
-1. **Specification Submission**: You provide high-level feature requirements
-2. **Task Decomposition**: The Planner agent breaks down the feature into manageable tasks
-3. **Agent Coordination**: The Coordinator assigns tasks to specialized agents
-4. **Parallel Execution**: Multiple agents work simultaneously on different aspects
-5. **Quality Assurance**: Automated testing and code review
-6. **Deployment**: Automated deployment and monitoring
-7. **Learning**: System captures outcomes for future improvements
-
-### Knowledge Base
-
-Agent Factory maintains a persistent vector database that stores:
-- **Project Context**: Codebase structure, architecture decisions
-- **Implementation Patterns**: Successful code patterns and solutions  
-- **Historical Outcomes**: Previous successes and failures
-- **Domain Knowledge**: Framework documentation, best practices
-- **Team Preferences**: Coding standards, deployment patterns
+> **📖 Detailed Core Concepts**: See [Shared Components - Core Concepts](SHARED_COMPONENTS.md#core-concepts) for comprehensive explanations of:
+> - Product Requirement Prompts (PRPs)
+> - Autonomous Development Workflow
+> - Knowledge Base architecture
 
 ## Agent Team Overview
 
-### 🎯 Task Coordinator
-- **Role**: Orchestrates the entire development process
-- **Responsibilities**: Task distribution, dependency management, progress tracking
-- **When Active**: Throughout the entire feature lifecycle
-- **Capabilities**: Agent supervision, workflow coordination, resource allocation
-
-### 📋 Feature Planner
-- **Role**: Breaks down high-level specifications into actionable tasks
-- **Responsibilities**: Requirements analysis, task decomposition, PRP generation
-- **When Active**: At the start of each feature and when requirements change
-- **Capabilities**: Technical analysis, dependency identification, timeline estimation
-
-### 💻 Implementation Coder
-- **Role**: Writes production-ready code following best practices
-- **Responsibilities**: Code implementation, refactoring, integration
-- **When Active**: During development phases
-- **Capabilities**: Multiple language support, pattern recognition, context-aware coding
-
-### 🧪 Automated Tester
-- **Role**: Ensures code quality through comprehensive testing
-- **Responsibilities**: Test generation, execution, coverage analysis
-- **When Active**: Continuously throughout development
-- **Capabilities**: Unit tests, integration tests, performance testing, security testing
-
-### 👀 Code Reviewer
-- **Role**: Maintains code quality and standards compliance
-- **Responsibilities**: Code review, standards enforcement, security analysis
-- **When Active**: After code implementation, before deployment
-- **Capabilities**: Static analysis, security scanning, performance review
-
-### 🚀 DevOps Agent
-- **Role**: Handles deployment and infrastructure management
-- **Responsibilities**: CI/CD pipeline management, deployment automation, monitoring
-- **When Active**: During deployment and maintenance phases
-- **Capabilities**: Multi-environment deployment, rollback management, scaling
+> **📖 Complete Agent Descriptions**: See [Shared Components - Agent Descriptions](SHARED_COMPONENTS.md#agent-descriptions) for detailed information about each agent's role, responsibilities, and capabilities.
 
 ## Creating Feature Specifications
 

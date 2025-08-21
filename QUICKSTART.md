@@ -2,41 +2,11 @@
 
 Get up and running with the PRP (Product Requirement Prompt) Framework in 5 minutes.
 
-## Prerequisites (2 minutes)
-
-1. **Install required tools**:
-   ```bash
-   # Install uv (Python package manager)
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   
-   # Install Claude Code (AI development CLI)
-   npm install -g @anthropics/claude-code
-   
-   # Verify Python 3.12+
-   python3 --version
-   ```
-
-2. **Clone and enter the project**:
-   ```bash
-   git clone <repository-url>
-   cd agent-factory
-   ```
+> **📖 Common Setup Steps**: For detailed prerequisites and installation steps, see [Shared Components](docs/SHARED_COMPONENTS.md#prerequisites)
 
 ## Quick Setup (1 minute)
 
-1. **Initialize Claude with project context**:
-   ```bash
-   claude /prime-core
-   ```
-
-2. **Verify setup**:
-   ```bash
-   # Check if uv is working
-   uv --version
-   
-   # Check if Claude commands are available
-   ls .claude/commands/
-   ```
+Follow the [standard installation steps](docs/SHARED_COMPONENTS.md#installation-steps), then:
 
 ## Your First PRP (2 minutes)
 
@@ -61,31 +31,40 @@ Get up and running with the PRP (Product Requirement Prompt) Framework in 5 minu
 
 ## Essential Commands
 
-```bash
-# Core workflow commands
-claude /prime-core                    # Initialize project context
-claude /prp-base-create "feature"     # Create comprehensive PRP
-claude /prp-base-execute "prp-file"   # Execute existing PRP
-claude /review-staged-unstaged        # Review changes
-
-# PRP execution modes
-uv run PRPs/scripts/prp_runner.py --prp name --interactive    # Interactive
-uv run PRPs/scripts/prp_runner.py --prp name --output-format json  # Headless
-```
+> **📖 Complete Command Reference**: See [Shared Components - Essential Commands](docs/SHARED_COMPONENTS.md#essential-commands) for full command documentation.
 
 ## Project Structure Overview
 
 ```
 agent-factory/
 ├── .claude/commands/     # 35+ pre-configured Claude commands
+├── .cursor/rules/        # Comprehensive coding standards and patterns
 ├── PRPs/
 │   ├── templates/        # PRP templates (start here)
 │   ├── scripts/          # PRP execution scripts  
 │   ├── ai_docs/          # Curated AI documentation
 │   └── README.md         # PRP methodology (read this!)
+├── src/                  # Source code
+│   ├── agents/           # Multi-agent system (coder, planner, tester, etc.)
+│   ├── communication/    # Redis pub/sub messaging
+│   ├── knowledge/        # Vector database and RAG
+│   ├── workflows/        # Process orchestration
+│   └── config/           # Settings and configuration
+├── tests/                # Test suite
+├── docker-compose.dev.yml # Development services
 ├── claude_md_files/      # Framework-specific examples
 └── CLAUDE.md             # Project instructions
 ```
+
+## Multi-Agent System
+
+> **📖 Agent Details**: See [Shared Components - Agent Descriptions](docs/SHARED_COMPONENTS.md#agent-descriptions) for detailed information about each agent's role and capabilities.
+
+## Knowledge Management
+
+- **Vector Database**: Chroma for storing and retrieving knowledge
+- **RAG System**: Retrieval-augmented generation for context-aware decisions
+- **Redis Message Bus**: Inter-agent communication and coordination
 
 ## Azure Setup
 
@@ -96,20 +75,20 @@ agent-factory/
 1. **Read the methodology**: `cat PRPs/README.md`
 2. **Study templates**: `cat PRPs/templates/prp_base.md`
 3. **Browse commands**: `ls .claude/commands/*/`
-4. **Read full onboarding**: `cat ONBOARDING.md`
+4. **Understand agents**: Explore `src/agents/` directory
+5. **Read full onboarding**: `cat ONBOARDING.md`
 
 ## Key Concepts
 
-- **PRP = PRD + curated codebase intelligence + agent/runbook**
-- **Goal**: Enable AI agents to ship production-ready code on the first pass
-- **Method**: Comprehensive context + structured templates + validation gates
-- **Workflow**: Create PRP → Execute with AI → Validate → Refine
+> **📖 Core Concepts**: See [Shared Components - Core Concepts](docs/SHARED_COMPONENTS.md#core-concepts) for detailed explanations of PRPs, workflows, and architecture.
 
 ## Getting Help
 
 - **Commands**: Browse `.claude/commands/` directory
 - **Templates**: Check `PRPs/templates/` for examples  
 - **Methodology**: Read `PRPs/README.md`
+- **Coding Standards**: Check `.cursor/rules/` for guidelines
+- **Agent Patterns**: Study `src/agents/` for multi-agent system
 - **Full guide**: See `ONBOARDING.md`
 
-You're ready to start using the PRP framework! Begin with a simple feature and work your way up to more complex implementations.
+You're ready to start using the PRP framework with the multi-agent system! Begin with a simple feature and work your way up to more complex implementations.

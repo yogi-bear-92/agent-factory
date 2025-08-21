@@ -84,18 +84,22 @@ uv run PRPs/scripts/prp_runner.py --prp [prp-name] --output-format stream-json
 
 ```bash
 # Level 1: Syntax & Style
-# Add your linting/formatting commands here
-# Example: ruff check --fix && mypy .
+ruff check --fix src/ tests/
+ruff format src/ tests/
+mypy src/
 
 # Level 2: Unit Tests  
-# Add your test commands here
-# Example: uv run pytest tests/ -v
+uv run pytest tests/ -v --tb=short
+uv run pytest tests/ --cov=src --cov-report=term-missing
 
 # Level 3: Integration
-# Add your integration test commands here
+docker-compose up -d redis chromadb
+uv run pytest tests/integration/ -v
+docker-compose down
 
-# Level 4: Deployment
-# Add deployment validation commands here
+# Level 4: Development Environment
+./scripts/dev-start.sh  # Start full dev environment
+curl -f http://localhost:8000/health  # API health check
 ```
 
 ## Anti-Patterns to Avoid
@@ -137,17 +141,25 @@ uv run PRPs/scripts/prp_runner.py --prp [prp-name] --output-format stream-json
 ```
 agent-factory/
 ├── .claude/
-│   ├── commands/           # 28+ Claude Code commands
-│   └── settings.json      # Tool permissions
-├── PRPs/
-│   ├── templates/         # PRP templates with validation
-│   ├── scripts/          # PRP runner and utilities
+│   ├── commands/           # 28+ Claude Code commands organized by function
+│   └── settings.local.json # MCP tool permissions
+├── PRPs/                   # Product Requirement Prompt framework
+│   ├── templates/         # Structured PRP templates with validation
+│   ├── scripts/          # PRP execution engine (prp_runner.py)
 │   ├── ai_docs/          # Curated Claude Code documentation
-│   ├── README.md         # PRP methodology guide
 │   └── *.md              # Active and example PRPs
-├── claude_md_files/      # Framework-specific CLAUDE.md examples
-├── CLAUDE.md             # This file - project-specific guidelines
-└── pyproject.toml        # Python package configuration
+├── src/
+│   ├── agent_factory/     # Main package with core framework
+│   ├── agents/           # Specialized agents (coder, planner, tester, etc.)
+│   ├── api/              # FastAPI REST and streaming interfaces
+│   ├── communication/     # Redis pub/sub messaging system
+│   ├── knowledge/        # Vector store and RAG implementation
+│   ├── workflows/        # PRP execution and validation workflows
+│   └── config/           # Settings and logging configuration
+├── docker-compose.yml     # Production services (Redis, ChromaDB, API)
+├── docker-compose.dev.yml # Development overrides with hot-reload
+├── scripts/dev-start.sh   # Development environment startup script
+└── pyproject.toml        # Python dependencies and tool configuration
 ```
 
 ## MCP Servers Available
@@ -158,10 +170,30 @@ agent-factory/
 
 ## Getting Started
 
+### Development Setup
+
+```bash
+# Install dependencies
+uv sync
+
+# Start development environment
+./scripts/dev-start.sh
+
+# Verify installation
+uv run pytest tests/test_models.py -v
+```
+
+### Core Workflow
+
 1. Use `/prime-core` to initialize project context
 2. Create PRPs with `/prp-base-create [feature description]`
 3. Execute PRPs with `/prp-base-execute PRPs/[prp-file].md`
 4. Review changes with `/review-staged-unstaged`
+
+### Available CLI Commands
+
+- `rovodev` - Friendly alias for Claude Code CLI
+- `uv run PRPs/scripts/prp_runner.py --prp [name] --interactive` - Execute PRPs with agent coordination
 
 ## Container Use Environment Rules
 

@@ -21,25 +21,13 @@ The **agent-factory** implements the **PRP (Product Requirement Prompt) Framewor
 
 ## Quick Start
 
-1. **Install dependencies**:
-   ```bash
-   uv sync
-   ```
+> **📖 Complete Setup Guide**: See [QUICKSTART.md](QUICKSTART.md) for detailed 5-minute setup guide.
 
-2. **Initialize project context**:
-   ```bash
-   claude /prime-core
-   ```
-
-3. **Create a PRP**:
-   ```bash
-   claude /prp-base-create "your feature description"
-   ```
-
-4. **Execute PRP with agents**:
-   ```bash
-   uv run PRPs/scripts/prp_runner.py --prp your-feature --interactive
-   ```
+**Essential Steps:**
+1. Install dependencies: `uv sync`
+2. Initialize context: `claude /prime-core`
+3. Create PRP: `claude /prp-base-create "your feature"`
+4. Execute with agents: `uv run PRPs/scripts/prp_runner.py --prp your-feature --interactive`
 
 ## Architecture
 
