@@ -87,6 +87,10 @@ agent-factory/
 └── CLAUDE.md             # Project instructions
 ```
 
+## Azure Setup
+
+- For Azure AI Foundry + Container Apps deployment, see docs/AZURE.md
+
 ## Next Steps
 
 1. **Read the methodology**: `cat PRPs/README.md`

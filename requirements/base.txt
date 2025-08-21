@@ -42,3 +42,6 @@ python-dotenv>=1.0.0
 click>=8.1.7
 rich>=13.7.0
 tenacity>=8.2.3
+
+# Azure AI Foundry client (OpenAI SDK)
+openai>=1.30.0

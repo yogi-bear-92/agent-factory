@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install uv for faster dependency management
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy dependency files first for better caching
 COPY pyproject.toml uv.lock ./
@@ -34,8 +34,7 @@ COPY requirements/ ./requirements/
 # Install Python dependencies
 RUN uv venv /app/.venv && \
     . /app/.venv/bin/activate && \
-    uv pip install --no-deps -r requirements/base.txt && \
-    uv pip install -e .
+    uv pip install -r requirements/base.txt
 
 # Add non-root user for security
 RUN groupadd -g 1000 appuser && \
@@ -87,10 +86,10 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/healthz || exit 1
 
 # Expose port
 EXPOSE 8000
 
 # Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "src.api.rest.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.rest.app:app", "--host", "0.0.0.0", "--port", "8000"]

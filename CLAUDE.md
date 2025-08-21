@@ -163,4 +163,55 @@ agent-factory/
 3. Execute PRPs with `/prp-base-execute PRPs/[prp-file].md`
 4. Review changes with `/review-staged-unstaged`
 
-Remember: This framework is about **one-pass implementation success through comprehensive context and validation**. Every PRP should contain the exact context for an AI agent to successfully implement working code in a single pass.
+## Container Use Environment Rules
+
+ALWAYS use ONLY Container Use environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+
+DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
+
+You MUST inform the user how to view your work using `container-use log <env_id>` AND `container-use checkout <env_id>`. Failure to do this will make your work inaccessible to others.
+
+### Container Use Workflow for Agent Factory
+
+1. **Environment Creation**: Create isolated environments for each PRP or feature development
+2. **PRP Execution**: Use Python environments with UV, LangChain, and LangGraph dependencies
+3. **Agent Development**: Configure environments with access to vector databases and Redis
+4. **Testing**: Validate agent coordination and PRP execution in isolation
+5. **Review**: Use `container-use diff <env_id>` to show changes before merging
+6. **Integration**: Merge approved changes with `container-use merge <env_id>`
+
+### Container Use Commands for Agent Factory
+
+```bash
+# Create environment for PRP development
+container-use create --name agent-factory-prp
+
+# Create environment for agent implementation
+container-use create --name agent-factory-agents
+
+# Create environment for testing and validation
+container-use create --name agent-factory-test
+
+# View environment status
+container-use list
+
+# Check logs and view work
+container-use log <env_id>
+container-use checkout <env_id>
+
+# Apply or merge changes
+container-use diff <env_id>    # Review changes first
+container-use apply <env_id>   # Stage changes for commit
+container-use merge <env_id>   # Merge with git history
+```
+
+### PRP + Container Use Integration
+
+When executing PRPs with Container Use:
+1. **Create dedicated environments** for each PRP to ensure isolation
+2. **Include Container Use commands** in PRP validation gates
+3. **Test agent coordination** across container boundaries
+4. **Validate MCP server connections** within environments
+5. **Ensure reproducible results** through containerized execution
+
+Remember: This framework is about **one-pass implementation success through comprehensive context and validation**. Every PRP should contain the exact context for an AI agent to successfully implement working code in a single pass, now enhanced with Container Use isolation for safe parallel development.

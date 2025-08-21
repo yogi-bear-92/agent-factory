@@ -1,0 +1,4 @@
+instructions:
+  - name: "PRP: Create and Execute a Feature"
+    description: "Step-by-step guide to create a Product Requirement Prompt and run it with the multi-agent system (interactive and headless), including validation and review."
+    content_file: "prp-create-and-execute-a-feature.md"
