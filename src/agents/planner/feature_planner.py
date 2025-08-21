@@ -5,7 +5,7 @@ from typing import Any
 
 from ...communication.message_bus import RedisMessageBus
 from ...knowledge.vector_store import ChromaVectorStore
-from ...models import AgentPRP, AgentType, TaskSpecification
+from ...models import AgentPRP, AgentType, TaskSpecification, AgentResponse
 from ..base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -243,3 +243,75 @@ Please analyze this feature and provide:
 
 Focus on creating a clear, actionable plan that other agents can execute.
 """
+
+    async def process_task(self, task: TaskSpecification) -> AgentResponse:
+        """Process a planning task and return a response.
+
+        Args:
+            task: Task specification to process
+
+        Returns:
+            Agent response with planning result
+        """
+        try:
+            logger.info(f"Processing planning task: {task.title}")
+            
+            # Get relevant context for planning
+            context = await self.knowledge.get_relevant_context(
+                query=f"{task.title} {task.description}", limit=5
+            )
+            
+            # Build planning prompt
+            prompt = self._build_task_prompt(task, context)
+            
+            # Generate planning using LLM
+            planning_result = await self.llm.agenerate([prompt])
+            result_text = planning_result.generations[0][0].text
+            
+            # Parse and structure the result
+            structured_result = await self._parse_task_result(result_text, task)
+            
+            return AgentResponse(
+                success=True,
+                message="Planning completed successfully",
+                data=structured_result
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to process planning task: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"Planning failed: {str(e)}",
+                data={"task_id": task.id}
+            )
+
+    async def process_prp(self, prp: AgentPRP) -> AgentResponse:
+        """Process a PRP and return a response.
+
+        Args:
+            prp: PRP to process
+
+        Returns:
+            Agent response with PRP result
+        """
+        try:
+            logger.info(f"Processing PRP: {prp.goal}")
+            
+            # Convert PRP to planning task
+            task = TaskSpecification(
+                title=prp.goal,
+                description=prp.justification,
+                requirements=prp.implementation_steps,
+                acceptance_criteria=prp.validation_criteria
+            )
+            
+            # Process as planning task
+            return await self.process_task(task)
+            
+        except Exception as e:
+            logger.error(f"Failed to process PRP: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"PRP processing failed: {str(e)}",
+                data={"prp_goal": prp.goal}
+            )

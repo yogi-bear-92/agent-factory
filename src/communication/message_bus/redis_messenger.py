@@ -209,33 +209,51 @@ class RedisMessageBus:
             logger.error(f"Failed to handle message from {channel}: {e}")
 
     async def send_task(
-        self,
-        recipient_id: str,
-        task_data: dict[str, Any],
-        sender_id: str,
-        correlation_id: str | None = None,
+        self, recipient_id: str, task_data: dict[str, Any], sender_id: str
     ) -> bool:
-        """Send a task assignment to a specific agent.
+        """Send a task to a specific agent.
 
         Args:
             recipient_id: ID of the agent to receive the task
-            task_data: Task specification data
+            task_data: Task data to send
             sender_id: ID of the sending agent
-            correlation_id: Optional correlation ID for tracking
 
         Returns:
             True if task was sent successfully
         """
-        message = AgentMessage(
-            sender_id=sender_id,
-            recipient_id=recipient_id,
-            message_type=MessageType.TASK_ASSIGNMENT,
-            payload=task_data,
-            correlation_id=correlation_id,
-        )
+        try:
+            message = AgentMessage(
+                sender_id=sender_id,
+                recipient_id=recipient_id,
+                message_type=MessageType.TASK_ASSIGNMENT,
+                payload=task_data,
+            )
 
-        channel = f"agent.{recipient_id}"
-        return await self.publish(channel, message)
+            return await self.publish(f"agent.{recipient_id}", message)
+
+        except Exception as e:
+            logger.error(f"Failed to send task: {e}")
+            return False
+
+    async def send_message(self, message: AgentMessage) -> bool:
+        """Send a message to a specific agent.
+
+        Args:
+            message: Message to send
+
+        Returns:
+            True if message was sent successfully
+        """
+        try:
+            if not message.recipient_id:
+                logger.error("Message must have a recipient_id")
+                return False
+
+            return await self.publish(f"agent.{message.recipient_id}", message)
+
+        except Exception as e:
+            logger.error(f"Failed to send message: {e}")
+            return False
 
     async def send_result(
         self,

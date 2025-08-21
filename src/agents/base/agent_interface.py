@@ -90,16 +90,61 @@ class BaseAgent(AgentInterface):
             Initialized LLM instance
         """
         try:
-            return Ollama(
+            # Create Ollama LLM instance
+            ollama_llm = Ollama(
                 model=model,
                 base_url=base_url,
                 temperature=0.1,
                 num_ctx=8192,
                 repeat_penalty=1.1,
             )
+            
+            # Wrap it to provide the expected interface
+            return OllamaWrapper(ollama_llm)
+            
         except Exception as e:
             logger.error(f"Failed to initialize LLM: {e}")
             raise
+
+
+class OllamaWrapper:
+    """Wrapper for Ollama LLM to provide expected interface."""
+    
+    def __init__(self, ollama_llm: Ollama):
+        """Initialize the wrapper.
+        
+        Args:
+            ollama_llm: Ollama LLM instance
+        """
+        self.ollama_llm = ollama_llm
+    
+    async def agenerate(self, prompts: list[str]) -> dict:
+        """Generate text asynchronously.
+        
+        Args:
+            prompts: List of prompts to generate from
+            
+        Returns:
+            Generation result with expected structure
+        """
+        try:
+            # For now, use the first prompt
+            prompt = prompts[0] if prompts else ""
+            
+            # Generate response using Ollama
+            response = await self.ollama_llm.ainvoke(prompt)
+            
+            # Return in expected format
+            return {
+                "generations": [[{"text": response}]]
+            }
+            
+        except Exception as e:
+            logger.error(f"LLM generation failed: {e}")
+            # Return empty result on error
+            return {
+                "generations": [[{"text": "Error: LLM generation failed"}]]
+            }
 
     async def start(self) -> None:
         """Start the agent and begin listening for messages."""

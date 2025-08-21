@@ -11,6 +11,10 @@ from ...models import (
     AgentMessage,
     AgentType,
     FeatureRequest,
+    AgentResponse,
+    AgentPRP,
+    TaskSpecification,
+    MessageType,
 )
 from ...workflows.prp_engine import AgentPRPProcessor
 from ..base import BaseAgent
@@ -465,7 +469,6 @@ class TaskCoordinator(BaseAgent):
                 "coordinator_id": self.agent_id,
                 "active_features": len(self.active_features),
                 "agent_count": len(self.agent_status),
-                "agent_status": self.agent_status,
                 "task_assignments": len(self.task_assignments),
                 "knowledge_stats": await self.knowledge.get_stats(),
             }
@@ -473,3 +476,117 @@ class TaskCoordinator(BaseAgent):
         except Exception as e:
             logger.error(f"Failed to get system status: {e}")
             return {"error": str(e)}
+
+    async def process_task(self, task: TaskSpecification) -> AgentResponse:
+        """Process a task and return a response.
+
+        Args:
+            task: Task specification to process
+
+        Returns:
+            Agent response with task result
+        """
+        try:
+            logger.info(f"Processing task: {task.title}")
+            
+            # For coordinator, delegate to appropriate agent
+            if task.assigned_agent and task.assigned_agent != self.agent_id:
+                # Forward task to assigned agent
+                await self.messenger.send_message(
+                    AgentMessage(
+                        sender_id=self.agent_id,
+                        recipient_id=task.assigned_agent,
+                        message_type=MessageType.TASK_ASSIGNMENT,
+                        payload={"task": task.__dict__}
+                    )
+                )
+                return AgentResponse(
+                    success=True,
+                    message="Task delegated to assigned agent",
+                    data={"task_id": task.id, "assigned_agent": task.assigned_agent}
+                )
+            else:
+                # Handle coordination tasks locally
+                return await self._handle_coordination_task(task)
+                
+        except Exception as e:
+            logger.error(f"Failed to process task: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"Task processing failed: {str(e)}",
+                data={"task_id": task.id}
+            )
+
+    async def process_prp(self, prp: AgentPRP) -> AgentResponse:
+        """Process a PRP and return a response.
+
+        Args:
+            prp: PRP to process
+
+        Returns:
+            Agent response with PRP result
+        """
+        try:
+            logger.info(f"Processing PRP: {prp.title}")
+            
+            # Convert PRP to feature request and handle
+            feature_request = FeatureRequest(
+                title=prp.title,
+                description=prp.description,
+                requirements=prp.requirements,
+                priority=prp.priority,
+                acceptance_criteria=prp.acceptance_criteria
+            )
+            
+            feature_id = await self.handle_feature_request(feature_request)
+            
+            return AgentResponse(
+                success=True,
+                message="PRP processed successfully",
+                data={"feature_id": feature_id, "title": prp.title}
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to process PRP: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"PRP processing failed: {str(e)}",
+                data={"prp_title": prp.title}
+            )
+
+    async def _handle_coordination_task(self, task: TaskSpecification) -> AgentResponse:
+        """Handle coordination-specific tasks.
+
+        Args:
+            task: Coordination task
+
+        Returns:
+            Agent response
+        """
+        try:
+            if "status_check" in task.title.lower():
+                return AgentResponse(
+                    success=True,
+                    message="System status retrieved",
+                    data=await self.get_system_status()
+                )
+            elif "feature_list" in task.title.lower():
+                return AgentResponse(
+                    success=True,
+                    message="Active features listed",
+                    data=await self.list_active_features()
+                )
+            else:
+                return AgentResponse(
+                    success=False,
+                    message="Unknown coordination task",
+                    data={"task_title": task.title}
+                )
+                
+        except Exception as e:
+            logger.error(f"Failed to handle coordination task: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"Coordination task failed: {str(e)}",
+                data={"task_id": task.id}
+            )

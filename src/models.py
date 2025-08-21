@@ -122,10 +122,9 @@ class AgentPRP:
 class AgentResponse(BaseModel):
     """Response from an agent after processing a task."""
 
-    agent_id: str
-    task_id: str
     success: bool
-    result: dict[str, Any] = Field(default_factory=dict)
+    message: str
+    data: dict[str, Any] = Field(default_factory=dict)
     error_message: str | None = None
     execution_time: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -158,4 +157,5 @@ class FeatureRequest(BaseModel):
     description: str
     requirements: list[str]
     priority: TaskPriority = TaskPriority.MEDIUM
+    acceptance_criteria: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)

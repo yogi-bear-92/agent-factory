@@ -6,6 +6,7 @@ from typing import Any
 
 import chromadb
 from chromadb.config import Settings
+from chromadb import HttpClient
 from sentence_transformers import SentenceTransformer
 
 from ...models import KnowledgeEntry, SourceType
@@ -18,6 +19,7 @@ class ChromaVectorStore:
 
     def __init__(
         self,
+        chroma_url: str = "http://localhost:8000",
         persist_directory: str = "./data/chroma",
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
         collection_name: str = "agent_knowledge",
@@ -25,19 +27,30 @@ class ChromaVectorStore:
         """Initialize the ChromaDB vector store.
 
         Args:
-            persist_directory: Directory to persist the database
+            chroma_url: ChromaDB server URL
+            persist_directory: Directory to persist the database (for local mode)
             embedding_model: Sentence transformer model for embeddings
             collection_name: Name of the collection to use
         """
+        self.chroma_url = chroma_url
         self.persist_directory = persist_directory
         self.embedding_model_name = embedding_model
         self.collection_name = collection_name
 
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=persist_directory,
-            settings=Settings(anonymized_telemetry=False, allow_reset=True),
-        )
+        # Check if this is a remote or local connection
+        if chroma_url.startswith("http"):
+            # Remote ChromaDB connection
+            import chromadb
+            self.client = chromadb.HttpClient(host=chroma_url.replace("http://", "").split(":")[0], 
+                                            port=int(chroma_url.split(":")[-1]))
+            self.is_remote = True
+        else:
+            # Local ChromaDB connection
+            self.client = chromadb.PersistentClient(
+                path=persist_directory,
+                settings=Settings(anonymized_telemetry=False, allow_reset=True),
+            )
+            self.is_remote = False
 
         # Initialize embedding model
         self.embedding_model = SentenceTransformer(embedding_model)
@@ -62,6 +75,23 @@ class ChromaVectorStore:
         loop = asyncio.get_event_loop()
         embedding = await loop.run_in_executor(None, self.embedding_model.encode, text)
         return embedding.tolist()
+
+    async def connect(self) -> None:
+        """Establish connection to ChromaDB (no-op for persistent client)."""
+        try:
+            # Test connection by getting collection info
+            self.collection.count()
+            logger.info("Connected to ChromaDB successfully")
+        except Exception as e:
+            logger.error(f"Failed to connect to ChromaDB: {e}")
+            raise
+
+    async def disconnect(self) -> None:
+        """Disconnect from ChromaDB (no-op for persistent client)."""
+        try:
+            logger.info("Disconnected from ChromaDB")
+        except Exception as e:
+            logger.error(f"Error disconnecting from ChromaDB: {e}")
 
     async def store_knowledge(self, entry: KnowledgeEntry) -> str:
         """Store a knowledge entry in the vector store.

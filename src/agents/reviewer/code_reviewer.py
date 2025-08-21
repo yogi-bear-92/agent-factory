@@ -4,7 +4,7 @@ import logging
 
 from ...communication.message_bus import RedisMessageBus
 from ...knowledge.vector_store import ChromaVectorStore
-from ...models import AgentType, TaskSpecification
+from ...models import AgentType, TaskSpecification, AgentResponse, AgentPRP
 from ..base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -55,3 +55,77 @@ Please conduct a thorough code review focusing on:
 
 Provide detailed feedback and approval/rejection recommendation.
 """
+
+    async def process_task(self, task: TaskSpecification) -> AgentResponse:
+        """Process a code review task and return a response.
+
+        Args:
+            task: Task specification to process
+
+        Returns:
+            Agent response with review result
+        """
+        try:
+            logger.info(f"Processing code review task: {task.title}")
+            
+            # Get relevant context for review
+            context = await self.knowledge.get_relevant_context(
+                query=f"{task.title} {task.description}", limit=5
+            )
+            
+            # Build review prompt
+            prompt = self._build_task_prompt(task, context)
+            
+            # Generate review using LLM
+            review_result = await self.llm.agenerate([prompt])
+            review_text = review_result.generations[0][0].text
+            
+            return AgentResponse(
+                success=True,
+                message="Code review completed successfully",
+                data={
+                    "task_id": task.id,
+                    "review": review_text,
+                    "context_used": context,
+                    "approval_status": "pending"
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to process code review task: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"Code review failed: {str(e)}",
+                data={"task_id": task.id}
+            )
+
+    async def process_prp(self, prp: AgentPRP) -> AgentResponse:
+        """Process a PRP and return a response.
+
+        Args:
+            prp: PRP to process
+
+        Returns:
+            Agent response with PRP result
+        """
+        try:
+            logger.info(f"Processing PRP: {prp.goal}")
+            
+            # Convert PRP to review task
+            task = TaskSpecification(
+                title=prp.goal,
+                description=prp.justification,
+                requirements=prp.implementation_steps,
+                acceptance_criteria=prp.validation_criteria
+            )
+            
+            # Process as review task
+            return await self.process_task(task)
+            
+        except Exception as e:
+            logger.error(f"Failed to process PRP: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"PRP processing failed: {str(e)}",
+                data={"prp_goal": prp.goal}
+            )

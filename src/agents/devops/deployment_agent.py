@@ -4,7 +4,7 @@ import logging
 
 from ...communication.message_bus import RedisMessageBus
 from ...knowledge.vector_store import ChromaVectorStore
-from ...models import AgentType, TaskSpecification
+from ...models import AgentType, TaskSpecification, AgentResponse, AgentPRP
 from ..base import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -54,3 +54,77 @@ Please handle deployment including:
 
 Provide deployment scripts, configuration, and monitoring setup.
 """
+
+    async def process_task(self, task: TaskSpecification) -> AgentResponse:
+        """Process a deployment task and return a response.
+
+        Args:
+            task: Task specification to process
+
+        Returns:
+            Agent response with deployment result
+        """
+        try:
+            logger.info(f"Processing deployment task: {task.title}")
+            
+            # Get relevant context for deployment
+            context = await self.knowledge.get_relevant_context(
+                query=f"{task.title} {task.description}", limit=5
+            )
+            
+            # Build deployment prompt
+            prompt = self._build_task_prompt(task, context)
+            
+            # Generate deployment plan using LLM
+            deployment_result = await self.llm.agenerate([prompt])
+            deployment_text = deployment_result.generations[0][0].text
+            
+            return AgentResponse(
+                success=True,
+                message="Deployment planning completed successfully",
+                data={
+                    "task_id": task.id,
+                    "deployment_plan": deployment_text,
+                    "context_used": context,
+                    "deployment_status": "planned"
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to process deployment task: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"Deployment planning failed: {str(e)}",
+                data={"task_id": task.id}
+            )
+
+    async def process_prp(self, prp: AgentPRP) -> AgentResponse:
+        """Process a PRP and return a response.
+
+        Args:
+            prp: PRP to process
+
+        Returns:
+            Agent response with PRP result
+        """
+        try:
+            logger.info(f"Processing PRP: {prp.goal}")
+            
+            # Convert PRP to deployment task
+            task = TaskSpecification(
+                title=prp.goal,
+                description=prp.justification,
+                requirements=prp.implementation_steps,
+                acceptance_criteria=prp.validation_criteria
+            )
+            
+            # Process as deployment task
+            return await self.process_task(task)
+            
+        except Exception as e:
+            logger.error(f"Failed to process PRP: {e}")
+            return AgentResponse(
+                success=False,
+                message=f"PRP processing failed: {str(e)}",
+                data={"prp_goal": prp.goal}
+            )
