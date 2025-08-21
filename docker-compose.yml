@@ -1,0 +1,411 @@
+version: '3.8'
+
+services:
+  # Redis Message Bus for Agent Communication
+  redis:
+    image: redis:7-alpine
+    container_name: agent-factory-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - agent-network
+
+  # ChromaDB Vector Database for Knowledge Storage
+  chromadb:
+    image: chromadb/chroma:0.4.22
+    container_name: agent-factory-chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - agent-network
+
+  # Main FastAPI Application and API Gateway
+  agent-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./src:/app/src
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=2
+      - MONITORING_ENABLE_METRICS=true
+      - MONITORING_LOG_LEVEL=INFO
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agent-network
+
+  # Task Coordinator Agent
+  agent-coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-coordinator
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=coordinator
+      - AGENT_MAX_CONCURRENT_AGENTS=5
+      - AGENT_TASK_TIMEOUT=3600
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.coordinator.task_coordinator"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # Feature Planner Agent
+  agent-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-planner
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=planner
+      - AGENT_TASK_TIMEOUT=1800
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.planner.feature_planner"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # Implementation Coder Agent
+  agent-coder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-coder
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker operations
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=coder
+      - AGENT_TASK_TIMEOUT=3600
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.coder.implementation_coder"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # Automated Tester Agent
+  agent-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-tester
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For test containers
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=tester
+      - AGENT_TASK_TIMEOUT=1800
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.tester.automated_tester"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # Code Reviewer Agent
+  agent-reviewer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-reviewer
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=reviewer
+      - AGENT_TASK_TIMEOUT=1800
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.reviewer.code_reviewer"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # DevOps Agent
+  agent-devops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-devops
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # Full Docker access for deployments
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - AGENT_TYPE=devops
+      - AGENT_TASK_TIMEOUT=3600
+      - AGENT_HEARTBEAT_INTERVAL=30
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: ["python", "-m", "agents.devops.deployment_agent"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis'); r.ping()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - agent-network
+
+  # Streamlit UI (Optional)
+  agent-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: agent-factory-ui
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - API_BASE_URL=http://agent-api:8000
+    depends_on:
+      agent-api:
+        condition: service_healthy
+    command: ["streamlit", "run", "src/api/ui/dashboard.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - agent-network
+    profiles:
+      - ui
+
+  # Prometheus Metrics (Optional)
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: agent-factory-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - agent-network
+    profiles:
+      - monitoring
+
+  # Grafana Dashboard (Optional)
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: agent-factory-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+    depends_on:
+      - prometheus
+    networks:
+      - agent-network
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+    driver: local
+  chroma_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

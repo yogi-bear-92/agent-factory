@@ -1,0 +1,149 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Development overrides for agent services
+  agent-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base  # Use base stage with build tools
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_WORKERS=1
+      - MONITORING_LOG_LEVEL=DEBUG
+    volumes:
+      - ./src:/app/src:ro  # Read-only source mounting
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./tests:/app/tests:ro
+    command: ["uvicorn", "api.rest.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/src"]
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # debugpy port
+
+  agent-coordinator:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - AGENT_HEARTBEAT_INTERVAL=60  # Slower heartbeat for debugging
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  agent-planner:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - AGENT_TASK_TIMEOUT=7200  # Longer timeout for debugging
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  agent-coder:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - AGENT_TASK_TIMEOUT=7200
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  agent-tester:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./tests:/app/tests:ro
+
+  agent-reviewer:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  agent-devops:
+    build:
+      target: base
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  # Redis with persistence disabled for faster dev cycles
+  redis:
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"  # Expose for local development tools
+
+  # ChromaDB with debug logging
+  chromadb:
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+      - CHROMA_LOG_LEVEL=DEBUG
+    ports:
+      - "8001:8000"  # Expose for direct access
+
+  # Development utilities
+  dev-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    container_name: agent-factory-dev-tools
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./docs:/app/docs
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    command: ["tail", "-f", "/dev/null"]  # Keep container running
+    networks:
+      - agent-network
+    profiles:
+      - dev
+
+volumes:
+  # Override volumes for development (keep local data)
+  chroma_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/chroma
+
+networks:
+  agent-network:
+    driver: bridge

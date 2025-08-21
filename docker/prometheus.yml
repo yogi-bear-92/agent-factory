@@ -1,0 +1,80 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Agent Factory API
+  - job_name: 'agent-api'
+    static_configs:
+      - targets: ['agent-api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Redis metrics (if redis_exporter is added)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    # metrics_path: '/metrics'  # Uncomment if using redis_exporter
+
+  # ChromaDB metrics
+  - job_name: 'chromadb'
+    static_configs:
+      - targets: ['chromadb:8000']
+    metrics_path: '/api/v1/heartbeat'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+  # Agent services (custom metrics endpoints)
+  - job_name: 'agent-coordinator'
+    static_configs:
+      - targets: ['agent-coordinator:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'agent-planner'
+    static_configs:
+      - targets: ['agent-planner:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'agent-coder'
+    static_configs:
+      - targets: ['agent-coder:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'agent-tester'
+    static_configs:
+      - targets: ['agent-tester:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'agent-reviewer'
+    static_configs:
+      - targets: ['agent-reviewer:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'agent-devops'
+    static_configs:
+      - targets: ['agent-devops:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
