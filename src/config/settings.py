@@ -8,6 +8,8 @@ from typing import Any
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.config.seo_settings import SEOSettings
+
 
 class RedisSettings(BaseSettings):
     """Redis configuration."""
@@ -132,6 +134,7 @@ class Settings(BaseSettings):
     agents: AgentSettings = Field(default_factory=AgentSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     azure_openai: AzureOpenAISettings = Field(default_factory=AzureOpenAISettings)
+    seo: SEOSettings = Field(default_factory=SEOSettings)
 
     # Paths
     data_directory: str = Field(default="./data", description="Data storage directory")
