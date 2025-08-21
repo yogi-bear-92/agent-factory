@@ -13,7 +13,7 @@ sys.path.insert(0, str(src_path))
 
 from communication.message_bus import RedisMessageBus
 from knowledge.vector_store import ChromaVectorStore
-from agents.reviewer import CodeReviewer
+from agents.reviewer.code_reviewer import CodeReviewer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,7 +37,7 @@ async def main():
         
         # Initialize ChromaDB connection
         chroma_host = os.getenv("CHROMA_HOST", "localhost")
-        chroma_port = int(os.getenv("CHROMA_PORT", "8000"))
+        chroma_port = int(os.getenv("CHROMA_PORT", "8001"))
         chroma_url = f"http://{chroma_host}:{chroma_port}"
         
         knowledge_base = ChromaVectorStore(chroma_url=chroma_url)
