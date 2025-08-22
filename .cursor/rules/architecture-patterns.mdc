@@ -1,0 +1,314 @@
+# Architecture Patterns & System Design
+
+## Core Architecture Principles
+
+### Multi-Agent System Design
+- **Specialized Agents**: Each agent has a specific role and responsibility
+- **Loose Coupling**: Agents communicate via message bus, not direct calls
+- **Scalability**: Add new agents without modifying existing ones
+- **Fault Tolerance**: Individual agent failures don't crash the system
+
+### Event-Driven Architecture
+- **Message Bus**: Redis-based pub/sub for inter-agent communication
+- **Asynchronous Processing**: Non-blocking message handling
+- **Event Sourcing**: Track all system events for audit and replay
+- **CQRS Pattern**: Separate read and write operations
+
+## System Components
+
+### Agent Layer
+- **Base Agent**: [src/agents/base/agent_interface.py](mdc:src/agents/base/agent_interface.py) - Common interface
+- **Agent Types**: Planner, Coder, Tester, Reviewer, DevOps, Coordinator
+- **Lifecycle Management**: Start, stop, health monitoring
+- **Resource Management**: Memory, CPU, external connections
+
+### Communication Layer
+- **Message Bus**: [src/communication/message_bus/](mdc:src/communication/message_bus/) - Redis pub/sub
+- **Protocols**: [src/communication/protocols/](mdc:src/communication/protocols/) - Message formats
+- **Coordination**: [src/communication/coordination/](mdc:src/communication/coordination/) - Agent orchestration
+
+### Knowledge Layer
+- **Vector Store**: [src/knowledge/vector_store/](mdc:src/knowledge/vector_store/) - Chroma integration
+- **Memory**: [src/knowledge/memory/](mdc:src/knowledge/memory/) - Agent memory management
+- **RAG**: [src/knowledge/rag/](mdc:src/knowledge/rag/) - Retrieval-augmented generation
+
+### Workflow Layer
+- **PRP Engine**: [src/workflows/prp_engine/](mdc:src/workflows/prp_engine/) - Task execution
+- **Monitoring**: [src/workflows/monitoring/](mdc:src/workflows/monitoring/) - System health
+- **Validation**: [src/workflows/validation/](mdc:src/workflows/validation/) - Quality assurance
+
+## Design Patterns
+
+### Factory Pattern
+```python
+# Agent creation using factory pattern
+class AgentFactory:
+    @staticmethod
+    def create_agent(agent_type: AgentType, config: AgentSettings) -> BaseAgent:
+        if agent_type == AgentType.PLANNER:
+            return PlannerAgent(config)
+        elif agent_type == AgentType.CODER:
+            return CoderAgent(config)
+        # ... other agent types
+```
+
+### Observer Pattern
+```python
+# Message bus implements observer pattern
+class MessageBus:
+    def subscribe(self, topic: str, callback: Callable):
+        # Subscribe to message topics
+        pass
+    
+    def publish(self, topic: str, message: AgentMessage):
+        # Publish messages to subscribers
+        pass
+```
+
+### Strategy Pattern
+```python
+# Different execution strategies for tasks
+class ExecutionStrategy(ABC):
+    @abstractmethod
+    async def execute(self, task: TaskSpecification) -> ExecutionResult:
+        pass
+
+class SequentialStrategy(ExecutionStrategy):
+    async def execute(self, task: TaskSpecification) -> ExecutionResult:
+        # Execute tasks sequentially
+        pass
+
+class ParallelStrategy(ExecutionStrategy):
+    async def execute(self, task: TaskSpecification) -> ExecutionResult:
+        # Execute tasks in parallel
+        pass
+```
+
+### Repository Pattern
+```python
+# Abstract data access layer
+class KnowledgeRepository(ABC):
+    @abstractmethod
+    async def store(self, entry: KnowledgeEntry) -> None:
+        pass
+    
+    @abstractmethod
+    async def query(self, query: str, limit: int = 10) -> List[KnowledgeEntry]:
+        pass
+
+class ChromaKnowledgeRepository(KnowledgeRepository):
+    async def store(self, entry: KnowledgeEntry) -> None:
+        # Store in Chroma vector database
+        pass
+    
+    async def query(self, query: str, limit: int = 10) -> List[KnowledgeEntry]:
+        # Query Chroma vector database
+        pass
+```
+
+## Data Flow Patterns
+
+### Request-Response Flow
+1. **Client Request**: External request to API
+2. **Task Creation**: Coordinator creates task specification
+3. **Agent Assignment**: Task assigned to appropriate agent
+4. **Execution**: Agent executes task
+5. **Result Collection**: Results collected and formatted
+6. **Response**: Response sent back to client
+
+### Event Flow
+1. **Event Generation**: Agent generates event (task completed, error occurred)
+2. **Event Publishing**: Event published to message bus
+3. **Event Processing**: Relevant agents process the event
+4. **State Update**: System state updated based on event
+5. **Side Effects**: Additional actions triggered by event
+
+### Knowledge Flow
+1. **Information Input**: New information enters system
+2. **Processing**: Information processed and structured
+3. **Storage**: Information stored in vector database
+4. **Indexing**: Vector embeddings created for retrieval
+5. **Retrieval**: Information retrieved when needed
+
+## Configuration Management
+
+### Settings Architecture
+- **Centralized Config**: [src/config/settings.py](mdc:src/config/settings.py) - Single source of truth
+- **Environment Variables**: Configuration via environment variables
+- **Validation**: Pydantic models for config validation
+- **Hierarchy**: Default → Environment → Override values
+
+### Configuration Patterns
+```python
+# Settings inheritance pattern
+class BaseSettings(BaseModel):
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+class RedisSettings(BaseSettings):
+    host: str = "localhost"
+    port: int = 6379
+    password: Optional[str] = None
+
+class Settings(BaseSettings):
+    redis: RedisSettings = RedisSettings()
+    chroma: ChromaSettings = ChromaSettings()
+    api: APISettings = APISettings()
+```
+
+## Error Handling Patterns
+
+### Circuit Breaker Pattern
+```python
+# Prevent cascading failures
+class CircuitBreaker:
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.state = "CLOSED"
+    
+    async def call(self, func: Callable, *args, **kwargs):
+        if self.state == "OPEN":
+            raise CircuitBreakerOpenError()
+        
+        try:
+            result = await func(*args, **kwargs)
+            self.failure_count = 0
+            return result
+        except Exception as e:
+            self.failure_count += 1
+            if self.failure_count >= self.failure_threshold:
+                self.state = "OPEN"
+            raise e
+```
+
+### Retry Pattern
+```python
+# Exponential backoff retry
+async def retry_with_backoff(
+    func: Callable,
+    max_retries: int = 3,
+    base_delay: float = 1.0
+) -> Any:
+    for attempt in range(max_retries):
+        try:
+            return await func()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise e
+            
+            delay = base_delay * (2 ** attempt)
+            await asyncio.sleep(delay)
+```
+
+## Performance Patterns
+
+### Connection Pooling
+```python
+# Reuse connections for better performance
+class ConnectionPool:
+    def __init__(self, max_connections: int = 10):
+        self.pool = asyncio.Queue(maxsize=max_connections)
+        self._initialize_pool()
+    
+    async def get_connection(self):
+        return await self.pool.get()
+    
+    async def return_connection(self, connection):
+        await self.pool.put(connection)
+```
+
+### Caching Patterns
+```python
+# Multi-level caching strategy
+class CacheManager:
+    def __init__(self):
+        self.l1_cache = {}  # In-memory cache
+        self.l2_cache = Redis()  # Redis cache
+    
+    async def get(self, key: str) -> Optional[Any]:
+        # Check L1 cache first
+        if key in self.l1_cache:
+            return self.l1_cache[key]
+        
+        # Check L2 cache
+        value = await self.l2_cache.get(key)
+        if value:
+            self.l1_cache[key] = value
+        
+        return value
+```
+
+## Security Patterns
+
+### Input Validation
+```python
+# Validate all inputs using Pydantic
+class TaskSpecification(BaseModel):
+    id: str
+    task_type: str
+    priority: TaskPriority
+    context: Dict[str, Any]
+    
+    @validator('id')
+    def validate_id(cls, v):
+        if not v or len(v) < 3:
+            raise ValueError('ID must be at least 3 characters')
+        return v
+```
+
+### Authentication & Authorization
+```python
+# JWT-based authentication
+class AuthMiddleware:
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+    
+    async def authenticate(self, token: str) -> Optional[Dict[str, Any]]:
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=["HS256"])
+            return payload
+        except jwt.InvalidTokenError:
+            return None
+```
+
+## Testing Patterns
+
+### Dependency Injection
+```python
+# Inject dependencies for testing
+class TestableAgent(BaseAgent):
+    def __init__(
+        self,
+        message_bus: MessageBus,
+        vector_store: VectorStore,
+        config: AgentSettings
+    ):
+        self.message_bus = message_bus
+        self.vector_store = vector_store
+        self.config = config
+```
+
+### Mock Patterns
+```python
+# Mock external dependencies
+@pytest.fixture
+def mock_message_bus():
+    bus = AsyncMock(spec=MessageBus)
+    bus.publish = AsyncMock()
+    bus.subscribe = AsyncMock()
+    return bus
+
+@pytest.fixture
+def mock_vector_store():
+    store = AsyncMock(spec=VectorStore)
+    store.store_knowledge = AsyncMock()
+    store.query_similar = AsyncMock(return_value=[])
+    return store
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,128 @@
+# PRP Development Workflow
+
+## PRP Structure Requirements
+
+### Mandatory Sections
+Every PRP must follow this structured format:
+- **Goal**: Specific end state and desires
+- **Why**: Business value and user impact  
+- **What**: User-visible behavior and technical requirements
+- **All Needed Context**: Documentation URLs, code examples, gotchas, patterns
+- **Implementation Blueprint**: Pseudocode with critical details and task lists
+- **Validation Loop**: Executable commands for syntax, tests, integration
+
+### Context Guidelines
+1. **Context is King**: Include ALL necessary documentation, examples, and caveats
+2. **Information Dense**: Use keywords and patterns from the codebase
+3. **No Prior Knowledge**: PRPs must be self-contained and comprehensive
+4. **Reference Existing Patterns**: Always include examples from the codebase
+
+## PRP Templates
+
+### Base Template
+- **Location**: [PRPs/templates/prp_base.md](mdc:PRPs/templates/prp_base.md)
+- **Usage**: Start with this template for most PRPs
+- **Customization**: Extend based on specific requirements
+
+### Specialized Templates
+- **Planning PRPs**: [PRPs/templates/prp_planning.md](mdc:PRPs/templates/prp_planning.md) - For task decomposition
+- **Task PRPs**: [PRPs/templates/prp_task.md](mdc:PRPs/templates/prp_task.md) - For specific task execution
+- **POC PRPs**: [PRPs/templates/prp_poc_react.md](mdc:PRPs/templates/prp_poc_react.md) - For proof of concepts
+
+## PRP Execution
+
+### Running PRPs
+- **Script**: Use [PRPs/scripts/prp_runner.py](mdc:PRPs/scripts/prp_runner.py)
+- **Interactive Mode**: `uv run PRPs/scripts/prp_runner.py --prp <name> --interactive`
+- **Headless Mode**: `uv run PRPs/scripts/prp_runner.py --prp <name> --output-format json`
+
+### PRP Organization
+- **Directory**: [PRPs/](mdc:PRPs/) - Main PRP directory
+- **AI Documentation**: [PRPs/ai_docs/](mdc:PRPs/ai_docs/) - AI-specific documentation
+- **Requirements**: [PRPs/requirements/](mdc:PRPs/requirements/) - Requirement specifications
+
+## PRP Content Standards
+
+### Goal Section
+- **Specific**: Define exact end state, not vague descriptions
+- **Measurable**: Include success criteria and validation steps
+- **Achievable**: Ensure scope is realistic for the timeframe
+
+### Why Section
+- **Business Value**: Explain why this matters to users/stakeholders
+- **User Impact**: Describe how this improves user experience
+- **Strategic Alignment**: Connect to broader project goals
+
+### What Section
+- **User Behavior**: Describe what users will see and do
+- **Technical Requirements**: Specify implementation constraints
+- **Acceptance Criteria**: Define when the PRP is complete
+
+### Context Section
+- **Documentation**: Include relevant URLs and references
+- **Code Examples**: Show existing patterns from the codebase
+- **Gotchas**: Highlight potential pitfalls and solutions
+- **Patterns**: Reference established architectural patterns
+
+### Implementation Blueprint
+- **Pseudocode**: High-level implementation approach
+- **Critical Details**: Important implementation considerations
+- **Task List**: Break down into manageable subtasks
+- **Dependencies**: Identify prerequisite work
+
+### Validation Loop
+- **Syntax Check**: Commands to validate code structure
+- **Testing**: Commands to run relevant tests
+- **Integration**: Commands to verify system integration
+- **Deployment**: Commands to deploy and verify
+
+## PRP Anti-Patterns
+
+### What to Avoid
+- ❌ **Minimal Context**: Don't create prompts without sufficient context
+- ❌ **Skip Validation**: Don't ignore validation steps
+- ❌ **Ignore Structure**: Don't deviate from the structured PRP format
+- ❌ **New Patterns**: Don't create new patterns when existing templates work
+
+### Common Mistakes
+- **Vague Goals**: "Make it better" instead of specific improvements
+- **Missing Context**: Assuming knowledge of existing codebase
+- **No Examples**: Failing to reference existing patterns
+- **Incomplete Validation**: Missing test or integration steps
+
+## PRP Development Process
+
+### Creation Phase
+1. **Choose Template**: Select appropriate template from [PRPs/templates/](mdc:PRPs/templates/)
+2. **Research Context**: Gather all necessary documentation and examples
+3. **Define Scope**: Clearly define what is and isn't included
+4. **Write Content**: Follow the structured format exactly
+
+### Review Phase
+1. **Self-Review**: Check against PRP structure requirements
+2. **Context Validation**: Ensure all necessary information is included
+3. **Clarity Check**: Verify that someone new could understand and execute
+4. **Template Compliance**: Confirm adherence to chosen template
+
+### Execution Phase
+1. **Run PRP**: Execute using the PRP runner script
+2. **Monitor Progress**: Track execution through validation steps
+3. **Handle Issues**: Address any problems that arise during execution
+4. **Validate Results**: Confirm that goals have been achieved
+
+## PRP Maintenance
+
+### Updates and Revisions
+- **Version Control**: Track changes to PRPs over time
+- **Feedback Integration**: Incorporate lessons learned from execution
+- **Pattern Evolution**: Update templates based on successful PRPs
+- **Documentation**: Keep PRPs current with codebase changes
+
+### Archive and Cleanup
+- **Completed PRPs**: Archive after successful execution
+- **Obsolete PRPs**: Remove or update outdated content
+- **Template Refinement**: Continuously improve based on usage patterns
+description:
+globs:
+alwaysApply: false
+---

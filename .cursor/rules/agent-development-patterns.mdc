@@ -1,0 +1,201 @@
+# Agent Development Patterns
+
+## Agent Architecture
+
+### Base Agent Inheritance
+- **All agents must inherit** from [BaseAgent](mdc:src/agents/base/agent_interface.py)
+- **Implement required methods**: `process_message()`, `execute_task()`
+- **Use consistent patterns**: Follow the established agent interface
+
+### Agent Interface Contract
+```python
+from src.agents.base import BaseAgent
+from src.models import AgentMessage, ExecutionResult, TaskSpecification
+
+class MyAgent(BaseAgent):
+    async def process_message(self, message: AgentMessage) -> ExecutionResult:
+        # Handle incoming messages
+        pass
+    
+    async def execute_task(self, task: TaskSpecification) -> ExecutionResult:
+        # Execute assigned tasks
+        pass
+```
+
+## Message Handling
+
+### Message Types
+- **AgentMessage**: Core message structure defined in [src/models.py](mdc:src/models.py)
+- **MessageType**: Enum for different message categories
+- **SourceType**: Enum for message sources
+
+### Message Processing Pattern
+```python
+async def process_message(self, message: AgentMessage) -> ExecutionResult:
+    try:
+        if message.message_type == MessageType.TASK_ASSIGNMENT:
+            return await self._handle_task_assignment(message)
+        elif message.message_type == MessageType.COORDINATION:
+            return await self._handle_coordination(message)
+        else:
+            return ExecutionResult.failure(f"Unknown message type: {message.message_type}")
+    except Exception as e:
+        self.logger.error("Error processing message", error=str(e), message_id=message.id)
+        return ExecutionResult.failure(f"Message processing failed: {str(e)}")
+```
+
+## Task Execution
+
+### Task Specification
+- **TaskSpecification**: Defined in [src/models.py](mdc:src/models.py)
+- **TaskStatus**: Enum for tracking task progress
+- **TaskPriority**: Enum for task prioritization
+
+### Task Execution Pattern
+```python
+async def execute_task(self, task: TaskSpecification) -> ExecutionResult:
+    try:
+        self.logger.info("Starting task execution", task_id=task.id, task_type=task.task_type)
+        
+        # Update task status
+        task.status = TaskStatus.IN_PROGRESS
+        
+        # Execute task logic
+        result = await self._perform_task_work(task)
+        
+        # Update task status
+        task.status = TaskStatus.COMPLETED
+        
+        return ExecutionResult.success(
+            message="Task completed successfully",
+            data={"task_id": task.id, "result": result}
+        )
+    except Exception as e:
+        task.status = TaskStatus.FAILED
+        self.logger.error("Task execution failed", task_id=task.id, error=str(e))
+        return ExecutionResult.failure(f"Task execution failed: {str(e)}")
+```
+
+## Error Handling & Logging
+
+### Structured Logging
+- **Use structlog**: Configured in [src/config/logging.py](mdc:src/config/logging.py)
+- **Context Keys**: Include relevant context in log messages
+- **Log Levels**: Use appropriate levels (INFO, DEBUG, ERROR)
+
+```python
+# Good logging examples
+self.logger.info("Agent started", agent_id=self.agent_id, agent_type=self.agent_type)
+self.logger.debug("Processing message", message_type=message.message_type, sender=message.sender)
+self.logger.error("Task failed", task_id=task.id, error=str(e), context=task.context)
+```
+
+### Error Handling Patterns
+```python
+# Specific exception handling
+try:
+    result = await self._external_api_call()
+except requests.RequestException as e:
+    return ExecutionResult.failure(f"API call failed: {str(e)}")
+except ValidationError as e:
+    return ExecutionResult.failure(f"Validation failed: {str(e)}")
+
+# Never catch generic Exception without logging
+try:
+    result = await self._risky_operation()
+except Exception as e:
+    self.logger.error("Unexpected error", error=str(e), operation="risky_operation")
+    return ExecutionResult.failure(f"Unexpected error: {str(e)}")
+```
+
+## Agent Communication
+
+### Message Bus Integration
+- **Redis Message Bus**: Use [src/communication/message_bus/](mdc:src/communication/message_bus/) for pub/sub
+- **Publish Messages**: Send messages to other agents
+- **Subscribe to Topics**: Listen for relevant messages
+
+```python
+# Publishing messages
+await self.message_bus.publish(
+    topic="task.completed",
+    message=AgentMessage(
+        message_type=MessageType.TASK_COMPLETION,
+        content={"task_id": task.id, "result": result}
+    )
+)
+
+# Subscribing to topics
+await self.message_bus.subscribe(
+    topic="task.assignment",
+    callback=self._handle_task_assignment
+)
+```
+
+## Knowledge Integration
+
+### Vector Store Usage
+- **Chroma Integration**: Use [src/knowledge/vector_store/](mdc:src/knowledge/vector_store/) for RAG
+- **Store Knowledge**: Save relevant information for future use
+- **Query Similar**: Find related knowledge for decision making
+
+```python
+# Store knowledge
+await self.vector_store.store_knowledge(
+    content=task_result,
+    metadata={"task_id": task.id, "agent_type": self.agent_type}
+)
+
+# Query similar knowledge
+similar_knowledge = await self.vector_store.query_similar(
+    query="How to handle API rate limiting?",
+    limit=5
+)
+```
+
+## Testing Agents
+
+### Test Structure
+- **Test Files**: Place in [tests/](mdc:tests/) directory
+- **Async Testing**: Use `pytest` with `asyncio_mode=auto`
+- **Mocking**: Mock external dependencies and message bus
+
+```python
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+
+@pytest.mark.asyncio
+async def test_agent_message_processing():
+    agent = MyAgent()
+    message = AgentMessage(message_type=MessageType.TASK_ASSIGNMENT)
+    
+    result = await agent.process_message(message)
+    
+    assert result.success is True
+    assert result.message == "Task processed successfully"
+```
+
+## Performance Considerations
+
+### Async Operations
+- **Non-blocking**: Never block the event loop
+- **Concurrent Tasks**: Use `asyncio.gather()` for parallel operations
+- **Resource Management**: Properly manage connections and resources
+
+```python
+# Concurrent task execution
+tasks = [self._process_item(item) for item in items]
+results = await asyncio.gather(*tasks, return_exceptions=True)
+
+# Resource cleanup
+async def __aenter__(self):
+    self.connection = await self._create_connection()
+    return self
+
+async def __aexit__(self, exc_type, exc_val, exc_tb):
+    await self.connection.close()
+```
+description:
+globs:
+alwaysApply: false
+---

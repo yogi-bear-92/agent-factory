@@ -1,0 +1,46 @@
+# Agent Factory Project Overview
+
+## Project Description
+Agent Factory is an autonomous development framework that enables AI agents to work together on software development tasks. The project implements a multi-agent system with specialized roles for planning, coding, testing, and deployment.
+
+## Core Architecture
+
+### Main Entry Points
+- **CLI Interface**: [src/agent_factory/cli.py](mdc:src/agent_factory/cli.py) - Main command-line interface
+- **Models**: [src/models.py](mdc:src/models.py) - Core data structures and enums
+- **Base Agent**: [src/agents/base/agent_interface.py](mdc:src/agents/base/agent_interface.py) - Base class for all agents
+
+### Agent Types
+- **Planner**: [src/agents/planner/](mdc:src/agents/planner/) - Task planning and decomposition
+- **Coder**: [src/agents/coder/](mdc:src/agents/coder/) - Code generation and implementation
+- **Tester**: [src/agents/tester/](mdc:src/agents/tester/) - Testing and quality assurance
+- **Reviewer**: [src/agents/reviewer/](mdc:src/agents/reviewer/) - Code review and validation
+- **DevOps**: [src/agents/devops/](mdc:src/agents/devops/) - Deployment and infrastructure
+- **Coordinator**: [src/agents/coordinator/](mdc:src/agents/coordinator/) - Agent orchestration
+
+### Core Systems
+- **Communication**: [src/communication/](mdc:src/communication/) - Inter-agent messaging and protocols
+- **Knowledge**: [src/knowledge/](mdc:src/knowledge/) - Memory, RAG, and vector storage
+- **Workflows**: [src/workflows/](mdc:src/workflows/) - Process orchestration and monitoring
+- **API**: [src/api/](mdc:src/api/) - REST and streaming interfaces
+- **Tools**: [src/tools/](mdc:src/tools/) - Utility functions and integrations
+
+## Configuration
+- **Settings**: [src/config/settings.py](mdc:src/config/settings.py) - Application configuration and environment variables
+- **Project Config**: [pyproject.toml](mdc:pyproject.toml) - Python project configuration and dependencies
+
+## Development Workflow
+- **PRPs**: [PRPs/](mdc:PRPs/) - Product Requirement Prompts for task definition
+- **Scripts**: [scripts/](mdc:scripts/) - Development and deployment utilities
+- **Tests**: [tests/](mdc:tests/) - Test suite and validation
+
+## Key Concepts
+- **Agent Interface**: All agents inherit from BaseAgent for consistent behavior
+- **Message Bus**: Redis-based pub/sub for inter-agent communication
+- **Vector Store**: Chroma-based knowledge storage and retrieval
+- **Execution Results**: Structured response objects for consistent agent outputs
+- **Task Management**: Hierarchical task decomposition and execution tracking
+description:
+globs:
+alwaysApply: false
+---
